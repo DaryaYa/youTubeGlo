@@ -116,6 +116,7 @@ document.addEventListener('DOMContentLoaded', () => {
             let ww = document.documentElement.clientWidth;
             let wh = document.documentElement.clientHeight;
 
+
             for (let i = 0; i < qw.length; i++) {
                 if (ww > qw[i]) {
                     youtuberContainer.querySelector('iframe').style.cssText = `
@@ -125,8 +126,9 @@ document.addEventListener('DOMContentLoaded', () => {
                     youtuberContainer.style.cssText = `
                     width: ${qw[i]}px; 
                     height: ${qh[i]}px; 
-                    top: ${(wh - qh[i]) / 2}; 
-                    left: ${(ww - qw[i]) / 2};  `;
+                    top: ${(wh - qh[i]) / 2}px; 
+                    left: ${(ww - qw[i]) / 2}px;  
+                    `;
                     break;
                 }
             }
