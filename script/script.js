@@ -123,10 +123,10 @@ document.addEventListener('DOMContentLoaded', () => {
                     height: ${qh[i]}px; `;
 
                     youtuberContainer.style.cssText = `
-                    width: ${qw[i]}px;
-                    height: ${qh[i]}px;
-                    top: ${(wh - qh[i]) / 2};
-                    left: ${(ww - qw[i]) / 2}; `;
+                    width: ${qw[i]}px; 
+                    height: ${qh[i]}px; 
+                    top: ${(wh - qh[i]) / 2}; 
+                    left: ${(ww - qw[i]) / 2};  `;
                     break;
                 }
             }
@@ -150,7 +150,7 @@ document.addEventListener('DOMContentLoaded', () => {
         youTuberModal.addEventListener('click', () => {
             youTuberModal.style.display = '';
             youtuberContainer.textContent = '';
-            window.remove('resize', sizeVideo);
+            window.removeEventListener('resize', sizeVideo);
         });
 
 
