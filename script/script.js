@@ -157,10 +157,5 @@ document.addEventListener('DOMContentLoaded', () => {
 
 
     }
-    // youTube
-    {
-        const API_KEY = 'AIzaSyBKNa1FsnRu3o02zZlv_A5EqVdOYJrRIFE';
-        const CLIENT_ID = '986839275049-s2o0kij3mtcpsqcscembd29520q006mi.apps.googleusercontent.com'
-    }
 
 });
