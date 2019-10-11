@@ -97,7 +97,57 @@ document.addEventListener('DOMContentLoaded', () => {
 
     }
 
-    // modal window
+    const youtuber = () => {
+            const youtuberItems = document.querySelectorAll('[data-youtuber]');
+            const youTuberModal = document.querySelector('.youTuberModal');
+            const youtuberContainer = document.getElementById('youtuberContainer');
+
+            const qw = [3840, 2560, 1920, 1280, 854, 640, 426, 254];
+            const qh = [2160, 1440, 1080, 720, 480, 360, 240, 144];
+            const sizeVideo = () => {
+                let ww = document.documentElement.clientWidth;
+                let wh = document.documentElement.clientHeight;
+
+
+                for (let i = 0; i < qw.length; i++) {
+                    if (ww > qw[i]) {
+                        youtuberContainer.querySelector('iframe').style.cssText = `
+                    width: ${qw[i]}px;
+                    height: ${qh[i]}px; `;
+
+                        youtuberContainer.style.cssText = `
+                    width: ${qw[i]}px; 
+                    height: ${qh[i]}px; 
+                    top: ${(wh - qh[i]) / 2}px; 
+                    left: ${(ww - qw[i]) / 2}px;  
+                    `;
+                        break;
+                    }
+                }
+            }
+
+            youtuberItems.forEach(elem => {
+                elem.addEventListener('click', () => {
+                    const idVideo = elem.dataset.youtuber;
+                    youTuberModal.style.display = 'block';
+
+                    const youTuberFrame = document.createElement('iframe');
+                    youTuberFrame.src = `https://youtube.com/embed/${idVideo}`;
+                    youtuberContainer.appendChild(youTuberFrame);
+
+                    window.addEventListener('resize', sizeVideo);
+
+                    sizeVideo();
+                })
+            })
+
+            youTuberModal.addEventListener('click', () => {
+                youTuberModal.style.display = '';
+                youtuberContainer.textContent = '';
+                window.removeEventListener('resize', sizeVideo);
+            });
+        }
+        // modal window
 
     {
         document.body.insertAdjacentHTML('beforeend', `
@@ -105,86 +155,106 @@ document.addEventListener('DOMContentLoaded', () => {
         <div id="youtuberClose">&#215;</div>
         <div id="youtuberContainer"></div>
     </div>`);
-
-        const youtuberItems = document.querySelectorAll('[data-youtuber]');
-        const youTuberModal = document.querySelector('.youTuberModal');
-        const youtuberContainer = document.getElementById('youtuberContainer');
-
-        const qw = [3840, 2560, 1920, 1280, 854, 640, 426, 254];
-        const qh = [2160, 1440, 1080, 720, 480, 360, 240, 144];
-        const sizeVideo = () => {
-            let ww = document.documentElement.clientWidth;
-            let wh = document.documentElement.clientHeight;
-
-
-            for (let i = 0; i < qw.length; i++) {
-                if (ww > qw[i]) {
-                    youtuberContainer.querySelector('iframe').style.cssText = `
-                    width: ${qw[i]}px;
-                    height: ${qh[i]}px; `;
-
-                    youtuberContainer.style.cssText = `
-                    width: ${qw[i]}px; 
-                    height: ${qh[i]}px; 
-                    top: ${(wh - qh[i]) / 2}px; 
-                    left: ${(ww - qw[i]) / 2}px;  
-                    `;
-                    break;
-                }
-            }
-        }
-
-        youtuberItems.forEach(elem => {
-            elem.addEventListener('click', () => {
-                const idVideo = elem.dataset.youtuber;
-                youTuberModal.style.display = 'block';
-
-                const youTuberFrame = document.createElement('iframe');
-                youTuberFrame.src = `https://youtube.com/embed/${idVideo}`;
-                youtuberContainer.appendChild(youTuberFrame);
-
-                window.addEventListener('resize', sizeVideo);
-
-                sizeVideo();
-            })
-        })
-
-        youTuberModal.addEventListener('click', () => {
-            youTuberModal.style.display = '';
-            youtuberContainer.textContent = '';
-            window.removeEventListener('resize', sizeVideo);
-        });
+        youtuber();
     }
-    /// authorisation
+
     {
-        function authenticate() {
-            return gapi.auth2.getAuthInstance()
+        //         keys 
+        const API_KEY = apiKey;
+        const CLIENT_ID = clientId;
+
+        /// authorisation
+        {
+            const buttonAuth = document.getElementById('authorize');
+            const authBlock = document.querySelector('.auth');
+
+            gapi.load("client:auth2", () => gapi.auth2.init({ client_id: CLIENT_ID }));
+
+            const errorAuth = err => {
+                console.error("Error loading GAPI client for API or signing in", err);
+                authBlock.style.display = '';
+            }
+            const authenticate = () => gapi.auth2.getAuthInstance()
                 .signIn({ scope: "https://www.googleapis.com/auth/youtube.readonly" })
-                .then(function() { console.log("Sign-in successful"); },
-                    function(err) { console.error("Error signing in", err); });
+                .then(() => console.log("Sign-in successful"))
+                .catch(errorAuth);
+
+
+            const loadClient = () => {
+                gapi.client.setApiKey(API_KEY);
+                return gapi.client.load("https://www.googleapis.com/discovery/v1/apis/youtube/v3/rest")
+                    .then(() => console.log("GAPI client loaded for API"))
+                    .then(() => authBlock.style.display = "none")
+                    .catch(errorAuth);
+            }
+
+            buttonAuth.addEventListener('click', () => {
+                authenticate().then(loadClient);
+            })
+        }
+        ///    request
+        {
+            const gloTube = document.querySelector('.logo-academy');
+            const trends = document.getElementById('yt_trend');
+            const like = document.getElementById('yt_like');
+
+            const request = options => gapi.client.youtube[options.method]
+                .list(options)
+                .then(response => response.result.items)
+                .then(render)
+                .then(youtuber)
+                .catch(err => console.error("Error : ", err));
+
+            const render = data => {
+                console.log(data);
+                const ytWrapper = document.getElementById('yt-wrapper');
+                ytWrapper.textContent = '';
+                data.forEach(item => {
+                    try {
+                        const { id, id: { videoId }, snippet: { channelTitle, title, resourceId: { videoId: likedVideoId } = {}, thumbnails: { high: { url } } } } = item;
+                        ytWrapper.innerHTML += `
+                     <div class="yt" data-youtuber="${likedVideoId || videoId || id}">
+                    <div class="yt-thumbnail" style="--aspect-ratio:16/9;">
+                        <img src="${url}" alt="thumbnail" class="yt-thumbnail__img">
+                    </div>
+                    <div class="yt-title">${title}</div>
+                    <div class="yt-channel">${channelTitle}</div>
+                </div>
+                    `;
+                    } catch (err) {
+                        console.error(err);
+                    }
+                })
+            }
+            gloTube.addEventListener('click', () => {
+                request({
+                    method: 'search',
+                    part: 'snippet',
+                    channelId: 'UCVswRUcKC-M35RzgPRv8qUg',
+                    order: 'date',
+                    maxResults: 6
+                })
+            });
+            trends.addEventListener('click', () => {
+                request({
+                    method: 'videos',
+                    part: 'snippet',
+                    chart: 'mostPopular',
+                    regionCode: "RU",
+                    maxResults: 6
+                })
+            });
+            like.addEventListener('click', () => {
+                request({
+                    method: 'playlistItems',
+                    part: 'snippet',
+                    playlistId: 'LL2WCblWL__TDvtpLZ7IUMpg',
+                    maxResults: 6
+                })
+            });
         }
 
-        function loadClient() {
-            gapi.client.setApiKey("YOUR_API_KEY");
-            return gapi.client.load("https://www.googleapis.com/discovery/v1/apis/youtube/v3/rest")
-                .then(function() { console.log("GAPI client loaded for API"); },
-                    function(err) { console.error("Error loading GAPI client for API", err); });
-        }
-        // Make sure the client is loaded and sign-in is complete before calling this method.
-        function execute() {
-            return gapi.client.youtube.channels.list({})
-                .then(function(response) {
-                        // Handle the results here (response.result has the parsed body).
-                        console.log("Response", response);
-                    },
-                    function(err) { console.error("Execute error", err); });
-        }
-        gapi.load("client:auth2", function() {
-            gapi.auth2.init({ client_id: "YOUR_CLIENT_ID" });
-        });
     }
-
-
 
 
 
